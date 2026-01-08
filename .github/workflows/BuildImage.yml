@@ -13,7 +13,7 @@ env:
   GITHUB_REPO: "guowanghushifu/docker-mods" #don't modify 
   ENDPOINT: "guowanghushifu/mods" #don't modify
   BASEIMAGE: "emby" #replace
-  MODNAME: "happy-emby" #replace
+  MODNAME: "crack" #replace
   MOD_VERSION: ${{ inputs.mod_version }} #don't modify
   MULTI_ARCH: "true" #set to false if not needed
 
