@@ -1,0 +1,30 @@
+#!/usr/bin/with-contenv bash
+
+# This is an install script that is designed to run after init-mods-package-install
+# so it can take advantage of packages installed
+# init-mods-end depends on this script so that later init and services wait until this script exits
+
+echo "**** Setting up Emby-Crack****"
+
+
+: "${EMBY_PATH:=/app/emby/system}"
+
+FLAG_FILE="$EMBY_PATH/.emby-crack-install"
+
+if [ -f "$FLAG_FILE" ]; then
+    echo "[emby-crack] Already initialized, skipping..."
+    exit 0
+fi
+
+# 检测 CPU 架构并运行对应的二进制文件
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+    echo "[emby-crack] Detected amd64 architecture"
+    /usr/local/bin/emby-crack-amd64 && touch "$FLAG_FILE"
+elif [ "$ARCH" = "aarch64" ]; then
+    echo "[emby-crack] Detected arm64 architecture"
+    /usr/local/bin/emby-crack-arm64 && touch "$FLAG_FILE"
+else
+    echo "[emby-crack] Unsupported architecture: $ARCH"
+    exit 1
+fi
