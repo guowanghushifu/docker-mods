@@ -10,7 +10,7 @@ on:
         required: false
 
 env:
-  GITHUB_REPO: "guowanghushifu/docker-mods" #don't modify
+  GITHUB_REPO: "guowanghushifu/docker-mods" #don't modify 
   ENDPOINT: "guowanghushifu/mods" #don't modify
   BASEIMAGE: "emby" #replace
   MODNAME: "happy-emby" #replace
