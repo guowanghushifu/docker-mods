@@ -2,7 +2,7 @@
 
 FROM scratch
 
-LABEL maintainer="2017fighting"
+LABEL maintainer="guowanghushifu"
 
 # copy local files
 COPY root/ /

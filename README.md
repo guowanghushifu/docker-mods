@@ -11,7 +11,7 @@ services:
   emby:
     image: lscr.io/linuxserver/emby:latest
     environment:
-+      DOCKER_MODS: 272567571/mods:emby-crack
++      DOCKER_MODS: guowanghushifu/mods:emby-crack
 +      EMBY_CRACK_URL: https://embycrack.sample.com # 替换成你自建的地址
 ```
 4. 如果你已经用到了DOCKER_MODS，可以使用`|`分割多个mod
@@ -21,7 +21,7 @@ services:
     image: lscr.io/linuxserver/emby:latest
     environment:
 -      DOCKER_MODS: other-docker-mod
-+      DOCKER_MODS: other-docker-mod|272567571/mods:emby-crack
++      DOCKER_MODS: other-docker-mod|guowanghushifu/mods:emby-crack
 +      EMBY_CRACK_URL: https://embycrack.sample.com # 替换成你自建的地址
 ```
 
