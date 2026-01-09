@@ -14,14 +14,15 @@ fi
 echo "[emby-crack] Detected architecture: $ARCH"
 
 # 根据系统类型安装依赖包
-if command -v apk > /dev/null 2>&1; then
-    # Alpine Linux
-    echo "[emby-crack] Detected Alpine Linux, installing icu-libs via apk..."
-    apk add --no-cache icu-libs
-elif command -v apt-get > /dev/null 2>&1; then
-    # Ubuntu/Debian
-    echo "[emby-crack] Detected Ubuntu/Debian, adding libicu-dev to install list..."
-    echo "libicu-dev" >> /mod-repo-packages-to-install.list
-else
-    echo "[emby-crack] Warning: Unknown package manager, skipping dependency installation"
+# Ubuntu/Debian
+if [ -f /usr/bin/apt ]; then
+    echo "[emby-crack] Detected Ubuntu/Debian, adding packages to install list..."
+    echo "\
+        libicu-dev" >> /mod-repo-packages-to-install.list
+fi
+# Alpine
+if [ -f /sbin/apk ]; then
+    echo "[emby-crack] Detected Alpine Linux, adding packages to install list..."
+    echo "\
+        icu-libs" >> /mod-repo-packages-to-install.list
 fi

@@ -2,8 +2,10 @@
 
 > 破解Emby Premiere，破解方法参考自[这篇文章](https://yubanmei.com/archives/133.html)
 
+> 动态破解的代码来自大佬 [2017fighting](https://github.com/2017fighting/docker-mods/tree/emby-crack)
+
 ## 使用方法
-1. emby镜像必须是`linuxserver/emby`的
+1. emby镜像必须是`linuxserver/emby`的，这个镜像更新及时，而且只有它支持Docker Mods
 2. 自建一个emby的[认证服务](#自建认证服务)
 3. 添加环境变量
 ```diff
