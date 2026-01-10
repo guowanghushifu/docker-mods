@@ -1,0 +1,117 @@
+#!/usr/bin/with-contenv bash
+
+# emby-shenyihijack mod - Post-install phase
+# This script runs after packages are installed
+
+CERT_PATH="/mitmproxy/mitmproxy-ca-cert.pem"
+MAX_RETRIES=10
+RETRY_INTERVAL=1
+
+echo "[mod-init] emby-shenyihijack: Starting post-install configuration..."
+
+# ============================================
+# STEP 1: Wait for and install mitmproxy certificate
+# ============================================
+echo "[mod-init] emby-shenyihijack: Checking for mitmproxy certificate..."
+
+cert_installed=false
+for i in $(seq 1 $MAX_RETRIES); do
+    if [ -f "$CERT_PATH" ]; then
+        echo "[mod-init] emby-shenyihijack: Certificate found at $CERT_PATH (attempt $i/$MAX_RETRIES)"
+        
+        # Install certificate based on OS
+        if [ -f /usr/bin/apt ]; then
+            # Debian/Ubuntu
+            echo "[mod-init] emby-shenyihijack: Installing certificate for Debian/Ubuntu..."
+            cp "$CERT_PATH" /usr/local/share/ca-certificates/mitmproxy-ca-cert.crt
+            update-ca-certificates
+        elif [ -f /sbin/apk ]; then
+            # Alpine
+            echo "[mod-init] emby-shenyihijack: Installing certificate for Alpine..."
+            cp "$CERT_PATH" /usr/local/share/ca-certificates/mitmproxy-ca-cert.crt
+            update-ca-certificates
+        fi
+        
+        cert_installed=true
+        echo "[mod-init] emby-shenyihijack: Certificate installed successfully."
+        break
+    else
+        echo "[mod-init] emby-shenyihijack: Certificate not found, waiting ${RETRY_INTERVAL}s... (attempt $i/$MAX_RETRIES)"
+        sleep $RETRY_INTERVAL
+    fi
+done
+
+if [ "$cert_installed" = false ]; then
+    echo "[mod-init] emby-shenyihijack: WARNING - Certificate not found after $MAX_RETRIES attempts. Continuing without certificate..."
+fi
+
+# ============================================
+# STEP 2: Configure /etc/hosts hijacking
+# ============================================
+echo "[mod-init] emby-shenyihijack: Configuring hosts hijacking..."
+
+# Check if required environment variables are set
+if [ -z "$SHENYI_HIJACKDOMAIN" ]; then
+    echo "[mod-init] emby-shenyihijack: SHENYI_HIJACKDOMAIN not set, skipping hosts configuration."
+else
+    if [ -z "$SHENYI_DOMAINLIST" ]; then
+        echo "[mod-init] emby-shenyihijack: SHENYI_DOMAINLIST not set, skipping hosts configuration."
+    else
+        echo "[mod-init] emby-shenyihijack: Resolving $SHENYI_HIJACKDOMAIN..."
+        
+        # Resolve the hijack domain to IPv4 address
+        # Try different methods based on available tools
+        HIJACK_IP=""
+        
+        # Try using getent first (works on most systems)
+        if command -v getent &> /dev/null; then
+            HIJACK_IP=$(getent ahostsv4 "$SHENYI_HIJACKDOMAIN" 2>/dev/null | head -n1 | awk '{print $1}')
+        fi
+        
+        # Fallback to nslookup if getent didn't work
+        if [ -z "$HIJACK_IP" ] && command -v nslookup &> /dev/null; then
+            HIJACK_IP=$(nslookup "$SHENYI_HIJACKDOMAIN" 2>/dev/null | grep -A1 'Name:' | grep 'Address:' | head -n1 | awk '{print $2}')
+        fi
+        
+        # Fallback to dig if available
+        if [ -z "$HIJACK_IP" ] && command -v dig &> /dev/null; then
+            HIJACK_IP=$(dig +short A "$SHENYI_HIJACKDOMAIN" 2>/dev/null | head -n1)
+        fi
+        
+        # Fallback to host command
+        if [ -z "$HIJACK_IP" ] && command -v host &> /dev/null; then
+            HIJACK_IP=$(host -t A "$SHENYI_HIJACKDOMAIN" 2>/dev/null | grep "has address" | head -n1 | awk '{print $NF}')
+        fi
+        
+        if [ -z "$HIJACK_IP" ]; then
+            echo "[mod-init] emby-shenyihijack: ERROR - Could not resolve $SHENYI_HIJACKDOMAIN to an IP address."
+        else
+            echo "[mod-init] emby-shenyihijack: Resolved $SHENYI_HIJACKDOMAIN to $HIJACK_IP"
+            
+            # Remove any existing entries added by this mod
+            if [ -f /etc/hosts ]; then
+                sed -i '/# emby-shenyihijack/d' /etc/hosts
+            fi
+            
+            # Parse the domain list (comma-separated) and add to /etc/hosts
+            echo "[mod-init] emby-shenyihijack: Adding domain entries to /etc/hosts..."
+            
+            IFS=',' read -ra DOMAINS <<< "$SHENYI_DOMAINLIST"
+            for domain in "${DOMAINS[@]}"; do
+                # Trim whitespace
+                domain=$(echo "$domain" | xargs)
+                if [ -n "$domain" ]; then
+                    echo "$HIJACK_IP $domain # emby-shenyihijack" >> /etc/hosts
+                    echo "[mod-init] emby-shenyihijack: Added: $HIJACK_IP $domain"
+                fi
+            done
+            
+            # Add a trailing newline
+            echo "" >> /etc/hosts
+            
+            echo "[mod-init] emby-shenyihijack: Hosts configuration completed."
+        fi
+    fi
+fi
+
+echo "[mod-init] emby-shenyihijack: Post-install configuration completed."

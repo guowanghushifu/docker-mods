@@ -4,10 +4,10 @@ on:
   pull_request_target:
 
 env:
-  GITHUB_REPO: "linuxserver/docker-mods"
-  ENDPOINT: "linuxserver/mods"
-  BASEIMAGE: "pr"
-  MODNAME: "build"
+  GITHUB_REPO: "guowanghushifu/docker-mods"
+  ENDPOINT: "guowanghushifu/mods"
+  BASEIMAGE: "emby"
+  MODNAME: "shenyihijack"
   MULTI_ARCH: "true"
   MOD_VERSION: ""
 
