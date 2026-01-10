@@ -72,6 +72,15 @@ else
         printf "%s" "$PROXY_URL" > /run/s6/container_environment/http_proxy
         printf "%s" "$PROXY_URL" > /run/s6/container_environment/https_proxy
         
+        # Also write to /etc/profile.d/ for interactive shell sessions (docker exec)
+        cat > /etc/profile.d/shenyi-proxy.sh << EOF
+export HTTP_PROXY="$PROXY_URL"
+export HTTPS_PROXY="$PROXY_URL"
+export http_proxy="$PROXY_URL"
+export https_proxy="$PROXY_URL"
+EOF
+        chmod +x /etc/profile.d/shenyi-proxy.sh
+        
         echo "[mod-init] emby-shenyihijack: HTTP_PROXY set to $PROXY_URL"
         echo "[mod-init] emby-shenyihijack: HTTPS_PROXY set to $PROXY_URL"
         echo "[mod-init] emby-shenyihijack: Proxy configuration completed."
