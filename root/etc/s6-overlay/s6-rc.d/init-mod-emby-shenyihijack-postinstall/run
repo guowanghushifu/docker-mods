@@ -49,8 +49,8 @@ fi
 # STEP 2: Configure hijacking based on mode
 # ============================================
 
-# Check hijack mode (default to REVERSE if not set)
-HIJACK_MODE="${SHENYI_HIJACK_MODE:-REVERSE}"
+# Check hijack mode (default to PROXY if not set)
+HIJACK_MODE="${SHENYI_HIJACK_MODE:-PROXY}"
 echo "[mod-init] emby-shenyihijack: Hijack mode: $HIJACK_MODE"
 
 # Check if required environment variables are set
