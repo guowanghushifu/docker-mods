@@ -54,6 +54,9 @@ HIJACK_MODE="${SHENYI_HIJACK_MODE:-PROXY}"
 echo "[mod-init] emby-shenyihijack: Hijack mode: $HIJACK_MODE"
 
 # Check if required environment variables are set
+# Compatibility: Support SHENYI_HIJACK_DOMAIN as an alias for SHENYI_HIJACKDOMAIN
+SHENYI_HIJACKDOMAIN="${SHENYI_HIJACKDOMAIN:-$SHENYI_HIJACK_DOMAIN}"
+
 if [ -z "$SHENYI_HIJACKDOMAIN" ]; then
     echo "[mod-init] emby-shenyihijack: SHENYI_HIJACKDOMAIN not set, skipping hijack configuration."
 else
