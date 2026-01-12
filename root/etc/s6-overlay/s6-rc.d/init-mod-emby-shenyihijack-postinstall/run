@@ -54,11 +54,11 @@ HIJACK_MODE="${SHENYI_HIJACK_MODE:-PROXY}"
 echo "[mod-init] emby-shenyihijack: Hijack mode: $HIJACK_MODE"
 
 # Check if required environment variables are set
-# Compatibility: Support SHENYI_HIJACK_DOMAIN as an alias for SHENYI_HIJACKDOMAIN
-SHENYI_HIJACKDOMAIN="${SHENYI_HIJACKDOMAIN:-$SHENYI_HIJACK_DOMAIN}"
+# Compatibility: Support SHENYI_HIJACKDOMAIN as an alias for SHENYI_HIJACK_DOMAIN
+SHENYI_HIJACK_DOMAIN="${SHENYI_HIJACK_DOMAIN:-$SHENYI_HIJACKDOMAIN}"
 
-if [ -z "$SHENYI_HIJACKDOMAIN" ]; then
-    echo "[mod-init] emby-shenyihijack: SHENYI_HIJACKDOMAIN not set, skipping hijack configuration."
+if [ -z "$SHENYI_HIJACK_DOMAIN" ]; then
+    echo "[mod-init] emby-shenyihijack: SHENYI_HIJACK_DOMAIN not set, skipping hijack configuration."
 else
     if [ "$HIJACK_MODE" = "PROXY" ]; then
         # ============================================
@@ -66,7 +66,7 @@ else
         # ============================================
         echo "[mod-init] emby-shenyihijack: Configuring PROXY mode..."
         
-        PROXY_URL="http://${SHENYI_HIJACKDOMAIN}:9999"
+        PROXY_URL="http://${SHENYI_HIJACK_DOMAIN}:9999"
         
         # Write proxy environment variables to s6 container environment
         # These will be available to all services in the container
@@ -94,10 +94,10 @@ EOF
         # ============================================
         echo "[mod-init] emby-shenyihijack: Configuring REVERSE mode (hosts hijacking)..."
         
-        if [ -z "$SHENYI_DOMAINLIST" ]; then
-            echo "[mod-init] emby-shenyihijack: SHENYI_DOMAINLIST not set, skipping hosts configuration."
+        if [ -z "$SHENYI_AUTH_DOMAIN_LIST" ]; then
+            echo "[mod-init] emby-shenyihijack: SHENYI_AUTH_DOMAIN_LIST not set, skipping hosts configuration."
         else
-            echo "[mod-init] emby-shenyihijack: Resolving $SHENYI_HIJACKDOMAIN..."
+            echo "[mod-init] emby-shenyihijack: Resolving $SHENYI_HIJACK_DOMAIN..."
             
             # Resolve the hijack domain to IPv4 address
             # Try different methods based on available tools
@@ -105,28 +105,28 @@ EOF
             
             # Try using getent first (works on most systems)
             if command -v getent &> /dev/null; then
-                HIJACK_IP=$(getent ahostsv4 "$SHENYI_HIJACKDOMAIN" 2>/dev/null | head -n1 | awk '{print $1}')
+                HIJACK_IP=$(getent ahostsv4 "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | head -n1 | awk '{print $1}')
             fi
             
             # Fallback to nslookup if getent didn't work
             if [ -z "$HIJACK_IP" ] && command -v nslookup &> /dev/null; then
-                HIJACK_IP=$(nslookup "$SHENYI_HIJACKDOMAIN" 2>/dev/null | grep -A1 'Name:' | grep 'Address:' | head -n1 | awk '{print $2}')
+                HIJACK_IP=$(nslookup "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | grep -A1 'Name:' | grep 'Address:' | head -n1 | awk '{print $2}')
             fi
             
             # Fallback to dig if available
             if [ -z "$HIJACK_IP" ] && command -v dig &> /dev/null; then
-                HIJACK_IP=$(dig +short A "$SHENYI_HIJACKDOMAIN" 2>/dev/null | head -n1)
+                HIJACK_IP=$(dig +short A "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | head -n1)
             fi
             
             # Fallback to host command
             if [ -z "$HIJACK_IP" ] && command -v host &> /dev/null; then
-                HIJACK_IP=$(host -t A "$SHENYI_HIJACKDOMAIN" 2>/dev/null | grep "has address" | head -n1 | awk '{print $NF}')
+                HIJACK_IP=$(host -t A "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | grep "has address" | head -n1 | awk '{print $NF}')
             fi
             
             if [ -z "$HIJACK_IP" ]; then
-                echo "[mod-init] emby-shenyihijack: ERROR - Could not resolve $SHENYI_HIJACKDOMAIN to an IP address."
+                echo "[mod-init] emby-shenyihijack: ERROR - Could not resolve $SHENYI_HIJACK_DOMAIN to an IP address."
             else
-                echo "[mod-init] emby-shenyihijack: Resolved $SHENYI_HIJACKDOMAIN to $HIJACK_IP"
+                echo "[mod-init] emby-shenyihijack: Resolved $SHENYI_HIJACK_DOMAIN to $HIJACK_IP"
                 
                 # Remove any existing entries added by this mod
                 if [ -f /etc/hosts ]; then
@@ -136,7 +136,7 @@ EOF
                 # Parse the domain list (comma-separated) and add to /etc/hosts
                 echo "[mod-init] emby-shenyihijack: Adding domain entries to /etc/hosts..."
                 
-                IFS=',' read -ra DOMAINS <<< "$SHENYI_DOMAINLIST"
+                IFS=',' read -ra DOMAINS <<< "$SHENYI_AUTH_DOMAIN_LIST"
                 for domain in "${DOMAINS[@]}"; do
                     # Trim whitespace
                     domain=$(echo "$domain" | xargs)
