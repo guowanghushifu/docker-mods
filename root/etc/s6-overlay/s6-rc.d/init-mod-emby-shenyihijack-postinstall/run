@@ -154,4 +154,18 @@ EOF
     fi
 fi
 
+# ============================================
+# STEP 3: Configure Device ID
+# ============================================
+
+if [ -n "$SHENYI_HIJACK_DEVICEID" ]; then
+    if [ -d "/config/data" ]; then
+        echo "[mod-init] emby-shenyihijack: Configuring Device ID..."
+        echo "$SHENYI_HIJACK_DEVICEID" > /config/data/device.txt
+        echo "[mod-init] emby-shenyihijack: Device ID written to /config/data/device.txt"
+    else
+        echo "[mod-init] emby-shenyihijack: /config/data not found, skipping Device ID configuration (server likely not initialized)."
+    fi
+fi
+
 echo "[mod-init] emby-shenyihijack: Post-install configuration completed."
