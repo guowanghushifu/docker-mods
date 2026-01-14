@@ -9,14 +9,16 @@ echo "[mod-init] emby-shenyihijack: Adding packages to install list..."
 if [ -f /usr/bin/apt ]; then
     echo "\
         ca-certificates \
-        dnsutils" >> /mod-repo-packages-to-install.list
+        dnsutils \
+        iproute2" >> /mod-repo-packages-to-install.list
 fi
 
 # Alpine
 if [ -f /sbin/apk ]; then
     echo "\
         ca-certificates \
-        bind-tools" >> /mod-repo-packages-to-install.list
+        bind-tools \
+        iproute2" >> /mod-repo-packages-to-install.list
 fi
 
 echo "[mod-init] emby-shenyihijack: Package list updated."

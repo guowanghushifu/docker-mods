@@ -152,8 +152,54 @@ EOF
                 echo "[mod-init] emby-shenyihijack: Hosts configuration completed."
             fi
         fi
+
+    elif [ "$HIJACK_MODE" = "GATEWAY" ]; then
+        # ============================================
+        # GATEWAY MODE: Change default gateway
+        # ============================================
+        echo "[mod-init] emby-shenyihijack: Configuring GATEWAY mode..."
+        
+        echo "[mod-init] emby-shenyihijack: Resolving $SHENYI_HIJACK_DOMAIN..."
+        
+        # Resolve the hijack domain to IPv4 address
+        HIJACK_IP=""
+        
+        # Try different methods based on available tools
+        if command -v getent &> /dev/null; then
+            HIJACK_IP=$(getent ahostsv4 "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | head -n1 | awk '{print $1}')
+        fi
+        
+        if [ -z "$HIJACK_IP" ] && command -v nslookup &> /dev/null; then
+            HIJACK_IP=$(nslookup "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | grep -A1 'Name:' | grep 'Address:' | head -n1 | awk '{print $2}')
+        fi
+        
+        if [ -z "$HIJACK_IP" ] && command -v dig &> /dev/null; then
+            HIJACK_IP=$(dig +short A "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | head -n1)
+        fi
+        
+        if [ -z "$HIJACK_IP" ] && command -v host &> /dev/null; then
+            HIJACK_IP=$(host -t A "$SHENYI_HIJACK_DOMAIN" 2>/dev/null | grep "has address" | head -n1 | awk '{print $NF}')
+        fi
+        
+        if [ -z "$HIJACK_IP" ]; then
+            echo "[mod-init] emby-shenyihijack: ERROR - Could not resolve $SHENYI_HIJACK_DOMAIN to an IP address."
+        else
+            echo "[mod-init] emby-shenyihijack: Resolved $SHENYI_HIJACK_DOMAIN to $HIJACK_IP"
+            
+            echo "[mod-init] emby-shenyihijack: Changing default gateway to $HIJACK_IP..."
+            
+            # Delete existing default gateway and add new one
+            # Using ip route replace might be cleaner if supported, but delete/add is standard
+            ip route del default
+            if ip route add default via "$HIJACK_IP"; then
+                echo "[mod-init] emby-shenyihijack: Default gateway changed successfully."
+            else
+                echo "[mod-init] emby-shenyihijack: ERROR - Failed to change default gateway. Ensure container has NET_ADMIN capability."
+            fi
+        fi
+        
     else
-        echo "[mod-init] emby-shenyihijack: WARNING - Unknown SHENYI_HIJACK_MODE: $HIJACK_MODE (expected PROXY or REVERSE)"
+        echo "[mod-init] emby-shenyihijack: WARNING - Unknown SHENYI_HIJACK_MODE: $HIJACK_MODE (expected PROXY, REVERSE, or GATEWAY)"
     fi
 fi
 
