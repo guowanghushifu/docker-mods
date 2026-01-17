@@ -89,7 +89,7 @@ embycrack.sample.com {
 }
 ```
 
-## Cloudflare Worker 示例，你也可以白嫖Cloudflare
+## Cloudflare Worker示例，你也可以白嫖Cloudflare
 ```javascript
 export default {
   async fetch(request, env, ctx) {
