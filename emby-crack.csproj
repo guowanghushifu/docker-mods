@@ -6,6 +6,7 @@
     <RootNamespace>emby_crack</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <InformationalVersion>$([System.DateTime]::UtcNow.ToString("yyyy-MM-dd HH:mm:ss")) UTC</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
