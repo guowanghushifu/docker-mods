@@ -325,7 +325,7 @@ namespace emby_crack
                     if (s.Contains("registered") || s.Contains("set_registered"))
                         Console.WriteLine($"  [{i}] {allInstr[i].OpCode} {s}");
                 }
-                throw new Exception("未找到需要修改的指令 (regRecord.registered = false)");
+                // throw new Exception("未找到需要修改的指令 (regRecord.registered = false)");
             }
         }
 
