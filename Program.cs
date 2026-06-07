@@ -304,10 +304,6 @@ namespace emby_crack
     {
         static void Main(string[] args)
         {
-            var buildTime = System.Reflection.Assembly.GetExecutingAssembly()
-                .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
-                ?.InformationalVersion ?? "unknown";
-            Console.WriteLine($"[版本] 编译时间: {buildTime}");
             string embyCrackURL = Environment.GetEnvironmentVariable("EMBY_CRACK_URL") ?? throw new Exception("环境变量 EMBY_CRACK_URL 未设置");
             Console.WriteLine($"环境变量 EMBY_CRACK_URL={embyCrackURL}");
 
