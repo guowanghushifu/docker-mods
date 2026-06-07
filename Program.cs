@@ -256,6 +256,48 @@ namespace emby_crack
             Console.WriteLine($"[修改] PluginSecurityManager/<PluginSecurityManager>d_26 中的ldstr 中的 {Constants.EMBY_VALIDATE_URL} 为 {embyCrackURL}");
         }
 
+        /// <summary>
+        /// 将 UpdateRegistrationStatus 中 regRecord.registered = false 改为 regRecord.registered = true。
+        /// 对应源码第 237 行：if (!string.Equals(regRecord.key, b, ...)) { regRecord.registered = false; }
+        /// </summary>
+        public void PatchUpdateRegistrationStatusSetRegisteredTrue()
+        {
+            // async 方法编译为状态机，真正的 IL 在 MoveNext 里
+            var targetType = _module.Types
+                .SelectMany(t => DNLibHelper.GetAllNestedTypes(t))
+                .FirstOrDefault(t => t.FullName.Contains("PluginSecurityManager/<UpdateRegistrationStatus>d__"))
+                ?? throw new Exception("找不到 UpdateRegistrationStatus 状态机类型");
+
+            var moveNextMethod = targetType.Methods.FirstOrDefault(m => m.Name == "MoveNext")
+                ?? throw new Exception("找不到 MoveNext 方法");
+
+            var instructions = moveNextMethod.Body.Instructions;
+            bool patched = false;
+            for (int i = 1; i < instructions.Count; i++)
+            {
+                var instr = instructions[i];
+                // 找到 stfld registered 字段赋值指令
+                if (instr.OpCode == OpCodes.Stfld
+                    && instr.Operand is dnlib.DotNet.IField field
+                    && field.Name == "registered")
+                {
+                    var prev = instructions[i - 1];
+                    // 只修改值为 false（ldc.i4.0）的赋值，改为 true（ldc.i4.1）
+                    if (prev.OpCode == OpCodes.Ldc_I4_0)
+                    {
+                        prev.OpCode = OpCodes.Ldc_I4_1;
+                        patched = true;
+                        Console.WriteLine("[修改] UpdateRegistrationStatus: regRecord.registered = false → true");
+                        break;
+                    }
+                }
+            }
+            if (!patched)
+            {
+                throw new Exception("未找到需要修改的指令 (regRecord.registered = false)，请检查 DLL 版本");
+            }
+        }
+
     }
 
     class Program
@@ -299,6 +341,7 @@ namespace emby_crack
             dllPatcher = new DLLPatcher(pathHelper.Path(dllRelativePath));
             dllPatcher.PatchConstString("MBValidateUrl", embyCrackURL);
             dllPatcher.PatchPluginSecurityManagerUpdateRegistrationStatus(embyCrackURL);
+            dllPatcher.PatchUpdateRegistrationStatusSetRegisteredTrue();
             dllPatcher.Save(pathHelper.OutputPath(dllRelativePath));
         }
     }
