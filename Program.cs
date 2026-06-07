@@ -276,25 +276,56 @@ namespace emby_crack
             for (int i = 1; i < instructions.Count; i++)
             {
                 var instr = instructions[i];
-                // 找到 stfld registered 字段赋值指令
-                if (instr.OpCode == OpCodes.Stfld
-                    && instr.Operand is dnlib.DotNet.IField field
-                    && field.Name == "registered")
+
+                // registered 可能是字段（stfld）或属性（call/callvirt set_registered）
+                bool isRegisteredStore =
+                    (instr.OpCode == OpCodes.Stfld
+                        && instr.Operand is dnlib.DotNet.IField f
+                        && f.Name == "registered")
+                    ||
+                    ((instr.OpCode == OpCodes.Call || instr.OpCode == OpCodes.Callvirt)
+                        && instr.Operand is IMethod m2
+                        && m2.Name == "set_registered");
+
+                if (!isRegisteredStore) continue;
+
+                // 向前最多扫描 4 条指令，找到推送 false(0) 的指令
+                for (int j = i - 1; j >= Math.Max(0, i - 4); j--)
                 {
-                    var prev = instructions[i - 1];
-                    // 只修改值为 false（ldc.i4.0）的赋值，改为 true（ldc.i4.1）
-                    if (prev.OpCode == OpCodes.Ldc_I4_0)
+                    var candidate = instructions[j];
+                    if (candidate.OpCode == OpCodes.Ldc_I4_0)
                     {
-                        prev.OpCode = OpCodes.Ldc_I4_1;
+                        candidate.OpCode = OpCodes.Ldc_I4_1;
+                        patched = true;
+                        Console.WriteLine("[修改] UpdateRegistrationStatus: regRecord.registered = false → true");
+                        break;
+                    }
+                    // ldc.i4.s 0 或 ldc.i4 0 也算
+                    if ((candidate.OpCode == OpCodes.Ldc_I4_S || candidate.OpCode == OpCodes.Ldc_I4)
+                        && Convert.ToInt32(candidate.Operand) == 0)
+                    {
+                        candidate.OpCode = OpCodes.Ldc_I4_1;
+                        candidate.Operand = null;
                         patched = true;
                         Console.WriteLine("[修改] UpdateRegistrationStatus: regRecord.registered = false → true");
                         break;
                     }
                 }
+                if (patched) break;
             }
+
             if (!patched)
             {
-                throw new Exception("未找到需要修改的指令 (regRecord.registered = false)，请检查 DLL 版本");
+                // 打印诊断信息帮助排查
+                Console.WriteLine("[诊断] MoveNext 中包含 'registered' 的指令：");
+                var allInstr = moveNextMethod.Body.Instructions;
+                for (int i = 0; i < allInstr.Count; i++)
+                {
+                    var s = allInstr[i].Operand?.ToString() ?? "";
+                    if (s.Contains("registered") || s.Contains("set_registered"))
+                        Console.WriteLine($"  [{i}] {allInstr[i].OpCode} {s}");
+                }
+                throw new Exception("未找到需要修改的指令 (regRecord.registered = false)");
             }
         }
 
