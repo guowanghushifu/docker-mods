@@ -26,7 +26,17 @@ services:
 +      DOCKER_MODS: other-docker-mod|guowanghushifu/mods:emby-crack
 +      EMBY_CRACK_URL: https://embycrack.sample.com # 替换成你自建的地址
 ```
+## 二进制构建方法
+下载本项目的代码，然后进入代码目录执行以下命令，分别构建amd64和ARM64版本的二进制
+```bash
+docker run --rm -v $(pwd):/src -w /src mcr.microsoft.com/dotnet/sdk:9.0 \
+  dotnet publish -c Release -r linux-arm64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true  -o output
+mv ./output/emby-crack ./emby-crack-arm64
 
+docker run --rm -v $(pwd):/src -w /src mcr.microsoft.com/dotnet/sdk:9.0 \
+  dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true  -o output
+mv ./output/emby-crack ./emby-crack-amd64
+```
 ## 自建认证服务
 下面是[caddy](https://caddyserver.com/)的示例
 ```Caddyfile
